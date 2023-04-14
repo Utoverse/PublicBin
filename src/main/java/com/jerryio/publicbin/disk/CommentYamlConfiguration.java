@@ -1,14 +1,7 @@
 package com.jerryio.publicbin.disk;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
-import org.apache.commons.lang.Validate;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -98,7 +91,7 @@ public class CommentYamlConfiguration extends YamlConfiguration {
     }
     
     public void addDefaultsWithComments(CommentYamlConfiguration defaults) {
-        Validate.notNull(defaults, "Defaults may not be null");
+        Objects.requireNonNull(defaults, "Defaults may not be null");
 
         addDefaults(defaults.getValues(true));
         

@@ -1,6 +1,7 @@
 package com.jerryio.publicbin.listener;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
@@ -9,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -24,7 +26,29 @@ import com.jerryio.publicbin.PublicBinPlugin;
 import com.jerryio.publicbin.objects.Bin;
 import com.jerryio.publicbin.util.BukkitVersion;
 
+import java.util.Set;
+
 public class MainListener implements Listener {
+
+    private final static Set<Material> shulkerBoxMaterials = Set.of(
+            Material.SHULKER_BOX,
+            Material.WHITE_SHULKER_BOX,
+            Material.ORANGE_SHULKER_BOX,
+            Material.MAGENTA_SHULKER_BOX,
+            Material.LIGHT_BLUE_SHULKER_BOX,
+            Material.YELLOW_SHULKER_BOX,
+            Material.LIME_SHULKER_BOX,
+            Material.PINK_SHULKER_BOX,
+            Material.GRAY_SHULKER_BOX,
+            Material.LIGHT_GRAY_SHULKER_BOX,
+            Material.CYAN_SHULKER_BOX,
+            Material.PURPLE_SHULKER_BOX,
+            Material.BLUE_SHULKER_BOX,
+            Material.BROWN_SHULKER_BOX,
+            Material.GREEN_SHULKER_BOX,
+            Material.RED_SHULKER_BOX,
+            Material.BLACK_SHULKER_BOX
+    );
 
     public static MainListener load(PublicBinPlugin plugin) {
         MainListener rtn;
@@ -35,7 +59,7 @@ public class MainListener implements Listener {
 
     // We process the click event when the player is allowed to.
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onInventoryClickEvent​(InventoryClickEvent event) {
+    public void onInventoryClickEvent(InventoryClickEvent event) {
         Bin usingBin = getInteractBin(event);
         if (usingBin == null)
             return;
@@ -45,7 +69,7 @@ public class MainListener implements Listener {
 
     // We process the click event when the player is allowed to.
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onInventoryDragEvent​(InventoryDragEvent event) {
+    public void onInventoryDragEvent(InventoryDragEvent event) {
         Bin usingBin = getInteractBin(event);
         if (usingBin == null)
             return;
@@ -54,7 +78,7 @@ public class MainListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    public void onInventoryOpenEvent​(InventoryOpenEvent event) {
+    public void onInventoryOpenEvent(InventoryOpenEvent event) {
         Player p = (Player) event.getPlayer();
         Bin usingBin = getInteractBin(event.getInventory(), p);
         if (usingBin == null)
@@ -62,9 +86,9 @@ public class MainListener implements Listener {
 
         playBinSound(p, "open");
     }
-    
+
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    public void onInventoryCloseEvent​(InventoryCloseEvent event) {
+    public void onInventoryCloseEvent(InventoryCloseEvent event) {
         Player p = (Player) event.getPlayer();
         Bin usingBin = getInteractBin(event.getInventory(), p);
         if (usingBin == null)
@@ -82,19 +106,23 @@ public class MainListener implements Listener {
     public void OnPlayerQuitEvent(PlayerQuitEvent event) {
         PublicBinPlugin.getBinManager().onPlayerQuit(event.getPlayer());
     }
-    
+
     @EventHandler(priority = EventPriority.NORMAL)
     public void onItemDespawnEvent(ItemDespawnEvent event) {
         PublicBinPlugin.getBinManager().trackDroppedItem(event.getEntity());
     }
-    
+
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityDamageEvent(EntityDamageEvent event) {
         Entity e = event.getEntity();
-        if (e.getType() == EntityType.DROPPED_ITEM)
+        if (e.getType() == EntityType.DROPPED_ITEM) {
+            if (shulkerBoxMaterials.contains(((Item) e).getItemStack().getType())) {
+                e.remove();
+            }
             PublicBinPlugin.getBinManager().trackDroppedItem((Item) e);
+        }
     }
-    
+
     @EventHandler
     public void onEntityPickupItemEvent(EntityPickupItemEvent event) {
         PublicBinPlugin.getBinManager().untrackDroppedItem(event.getItem());
@@ -116,7 +144,7 @@ public class MainListener implements Listener {
             return null;
         }
     }
-    
+
     private void playBinSound(Player p, String sub) {
         boolean verCheck = BukkitVersion.isSupport("1.15");
         p.playSound(p.getLocation(), (verCheck ? "block.barrel." : "block.shulker_box.") + sub, 1, 2f);
